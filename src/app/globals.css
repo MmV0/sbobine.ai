@@ -209,3 +209,61 @@ input:checked + .slider:before {
     @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
   }
 }
+
+/* Stili per il player audio */
+.progress-slider {
+  background: linear-gradient(to right, #2563eb 0%, #2563eb var(--progress, 0%), #e5e7eb var(--progress, 0%), #e5e7eb 100%);
+}
+
+.progress-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-slider::-webkit-slider-track {
+  height: 8px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.progress-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+}
+
+/* Evidenziazione del testo sincronizzata */
+.text-highlighted {
+  background-color: #fef3c7;
+  animation: highlight-pulse 0.5s ease-in-out;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.text-highlighted-active {
+  background-color: #fbbf24;
+  color: #92400e;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: #fef3c7; }
+  50% { background-color: #fbbf24; }
+  100% { background-color: #fef3c7; }
+}

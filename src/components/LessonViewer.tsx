@@ -23,6 +23,7 @@ import ConceptMapViewer from './ConceptMapViewer'
 import QuizViewer from './QuizViewer'
 import AnnotationsPanel from './AnnotationsPanel'
 import ExportModal from './ExportModal'
+import AudioPlayer from './AudioPlayer'
 
 interface LessonViewerProps {
   audioFile: AudioFile
@@ -40,6 +41,18 @@ export default function LessonViewer({ audioFile, transcription, summary }: Less
   const [isEditingName, setIsEditingName] = useState(false)
   const [newFileName, setNewFileName] = useState(audioFile.fileName)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  
+  // Stati per il player audio
+  const [currentTime, setCurrentTime] = useState(0)
+  const [highlightingEnabled, setHighlightingEnabled] = useState(true)
+  const [seekTime, setSeekTime] = useState<number | undefined>(undefined)
+  
+  // Funzione per il seek nell'audio
+  const handleSeek = (time: number) => {
+    setSeekTime(time)
+    // Reset seekTime dopo un breve delay per evitare loop
+    setTimeout(() => setSeekTime(undefined), 100)
+  }
 
   // Recupera i nuovi contenuti se disponibili
   const elaboration = transcription ? getElaboration(transcription.id) : null
@@ -51,7 +64,7 @@ export default function LessonViewer({ audioFile, transcription, summary }: Less
 
   const handleDeleteLesson = () => {
     deleteAudioFile(audioFile.id)
-    navigateToDashboard()
+    navigateToDashboard('library')
   }
 
   const handleSaveFileName = () => {
@@ -61,8 +74,7 @@ export default function LessonViewer({ audioFile, transcription, summary }: Less
   }
 
   const handleBackToDashboard = () => {
-
-    navigateToDashboard()
+    navigateToDashboard('library')
   }
 
   const canEdit = audioFile.status === 'READY' && transcription
@@ -263,15 +275,31 @@ export default function LessonViewer({ audioFile, transcription, summary }: Less
       <div className={`grid grid-cols-1 gap-6 ${activeTab === 'summary' && summary ? 'lg:grid-cols-4' : ''}`}>
         <div className={activeTab === 'summary' && summary ? 'lg:col-span-3' : ''}>
           {activeTab === 'transcription' && transcription && (
-            <TranscriptionEditor
-              transcription={transcription}
-              isEditing={isEditing}
-              onSave={(updatedText) => {
-
-                setIsEditing(false)
-              }}
-              onToggleEdit={() => setIsEditing(!isEditing)}
-            />
+            <div className="space-y-6">
+              {/* Audio Player */}
+              <AudioPlayer
+                audioUrl={audioFile.fileUrl}
+                duration={audioFile.durationSeconds}
+                onTimeUpdate={setCurrentTime}
+                highlightingEnabled={highlightingEnabled}
+                onToggleHighlighting={() => setHighlightingEnabled(!highlightingEnabled)}
+                seekTime={seekTime}
+              />
+              
+              {/* Transcription Editor */}
+              <TranscriptionEditor
+                transcription={transcription}
+                isEditing={isEditing}
+                onSave={(updatedText) => {
+                  setIsEditing(false)
+                }}
+                onToggleEdit={() => setIsEditing(!isEditing)}
+                currentTime={currentTime}
+                highlightingEnabled={highlightingEnabled}
+                onSeek={handleSeek}
+                audioDuration={audioFile.durationSeconds}
+              />
+            </div>
           )}
           
           {activeTab === 'summary' && summary && (

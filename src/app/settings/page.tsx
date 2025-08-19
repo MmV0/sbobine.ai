@@ -143,7 +143,7 @@ export default function SettingsPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <button
-              onClick={navigateToDashboard}
+              onClick={() => navigateToDashboard('library')}
               type="button"
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
             >

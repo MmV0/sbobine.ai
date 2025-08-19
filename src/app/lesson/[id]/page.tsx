@@ -39,12 +39,9 @@ export default function LessonPage({ params }: LessonPageProps) {
 
     if (!file) {
       // Solo redirect se i dati sono stati caricati e il file non esiste
-
       router.push('/dashboard')
       return
     }
-    
-
 
     setAudioFile(file)
 
@@ -59,7 +56,7 @@ export default function LessonPage({ params }: LessonPageProps) {
     }
 
     setLoading(false)
-  }, [params.id, audioFiles, user, authLoading, router, getTranscription, getSummary, dataLoading])
+  }, [params.id, audioFiles, user, authLoading, router, dataLoading])
 
   if (authLoading || loading) {
     return (

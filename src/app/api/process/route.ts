@@ -214,8 +214,9 @@ async function processTranscription(file: File, language: string) {
 }
 
 async function processSummary(transcriptionText: string, language: string) {
+  const config = getOpenAIConfig()
+  
   try {
-    const config = getOpenAIConfig()
     const openai = new OpenAI({
       apiKey: config.apiKey,
     })
@@ -251,8 +252,15 @@ async function processSummary(transcriptionText: string, language: string) {
     // Prova a estrarre JSON dalla risposta
     let summaryData
     try {
-      // Prova prima a parsare direttamente
-      summaryData = JSON.parse(responseText)
+      // Rimuovi blocchi markdown se presenti
+      let cleanedResponse = responseText.trim()
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      summaryData = JSON.parse(cleanedResponse)
     } catch (parseError) {
       // Se fallisce, cerca di estrarre JSON da una risposta più lunga
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
@@ -368,8 +376,9 @@ function generateTextSummary(sections: any): string {
 
 // Funzione helper per rielaborazione
 async function processElaboration(transcriptionText: string, language: string) {
+  const config = getOpenAIConfig()
+  
   try {
-    const config = getOpenAIConfig()
     const openai = new OpenAI({
       apiKey: config.apiKey,
     })
@@ -434,8 +443,9 @@ La lezione copre aspetti fondamentali che sono essenziali per comprendere l'argo
 
 // Funzione helper per mappa concettuale
 async function processConceptMap(transcriptionText: string, language: string) {
+  const config = getOpenAIConfig()
+  
   try {
-    const config = getOpenAIConfig()
     const openai = new OpenAI({
       apiKey: config.apiKey,
     })
@@ -462,7 +472,15 @@ async function processConceptMap(transcriptionText: string, language: string) {
 
     let conceptMapData
     try {
-      conceptMapData = JSON.parse(responseText)
+      // Rimuovi blocchi markdown se presenti
+      let cleanedResponse = responseText.trim()
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      conceptMapData = JSON.parse(cleanedResponse)
     } catch (parseError) {
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       conceptMapData = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
@@ -518,8 +536,9 @@ async function processConceptMap(transcriptionText: string, language: string) {
 
 // Funzione helper per quiz
 async function processQuiz(transcriptionText: string, language: string) {
+  const config = getOpenAIConfig()
+  
   try {
-    const config = getOpenAIConfig()
     const openai = new OpenAI({
       apiKey: config.apiKey,
     })
@@ -546,10 +565,35 @@ async function processQuiz(transcriptionText: string, language: string) {
 
     let quizData
     try {
-      quizData = JSON.parse(responseText)
+      // Rimuovi blocchi markdown se presenti
+      let cleanedResponse = responseText.trim()
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      quizData = JSON.parse(cleanedResponse)
     } catch (parseError) {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-      quizData = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
+      console.log('Errore parsing JSON quiz:', parseError)
+      console.log('Response text:', responseText)
+      
+      try {
+        // Prova a estrarre il JSON dal testo
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          // Pulisci il JSON da possibili caratteri malformati
+          let cleanJson = jsonMatch[0]
+          // Rimuovi trailing commas che possono causare errori
+          cleanJson = cleanJson.replace(/,(\s*[}\]])/g, '$1')
+          quizData = JSON.parse(cleanJson)
+        } else {
+          throw new Error('No JSON found in response')
+        }
+      } catch (secondParseError) {
+        console.log('Errore secondo tentativo parsing:', secondParseError)
+        quizData = {}
+      }
     }
 
     const questions = Array.isArray(quizData.questions) 

@@ -9,13 +9,21 @@ interface TranscriptionEditorProps {
   isEditing: boolean
   onSave: (updatedText: string) => void
   onToggleEdit?: () => void
+  currentTime?: number
+  highlightingEnabled?: boolean
+  onSeek?: (time: number) => void
+  audioDuration?: number
 }
 
 export default function TranscriptionEditor({ 
   transcription, 
   isEditing, 
   onSave,
-  onToggleEdit
+  onToggleEdit,
+  currentTime = 0,
+  highlightingEnabled = false,
+  onSeek,
+  audioDuration = 1800
 }: TranscriptionEditorProps) {
   const [editedText, setEditedText] = useState(transcription.cleanText)
   const [hasChanges, setHasChanges] = useState(false)
@@ -40,24 +48,53 @@ export default function TranscriptionEditor({
     setHasChanges(false)
   }
 
-  // Simula la formattazione del testo con timestamp
+  // Simula la formattazione del testo con timestamp e highlighting
   const formatTextWithTimestamps = (text: string) => {
     const sentences = text.split('. ')
+    
     return sentences.map((sentence, index) => {
       if (!sentence.trim()) return null
       
-      const timestamp = Math.floor((index * 30) / sentences.length) * 30 // Timestamp ogni 30 secondi circa
+      // Calcola timestamp per ogni frase basato sulla posizione nel testo
+      const startTime = (index / sentences.length) * audioDuration
+      const endTime = ((index + 1) / sentences.length) * audioDuration
+      const timestamp = Math.floor(startTime)
       const minutes = Math.floor(timestamp / 60)
       const seconds = timestamp % 60
       
+      // Determina se questa frase dovrebbe essere evidenziata
+      const isCurrentSentence = highlightingEnabled && 
+        currentTime >= startTime && 
+        currentTime < endTime
+      
+      const isNearCurrentSentence = highlightingEnabled &&
+        Math.abs(currentTime - startTime) < 10 // 10 secondi di tolleranza
+      
       return (
-        <div key={index} className="mb-4 group">
+        <div 
+          key={index} 
+          className={`mb-4 group transition-all duration-300 ${
+            isCurrentSentence ? 'bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 rounded-r-lg' : ''
+          }`}
+        >
           <div className="flex items-start space-x-3">
-            <span className="text-xs text-gray-400 font-mono mt-1 min-w-[50px]">
+            <button
+              className={`text-xs font-mono mt-1 min-w-[50px] text-left hover:text-primary-600 transition-colors ${
+                isCurrentSentence ? 'text-yellow-600 font-medium' : 'text-gray-400'
+              }`}
+              onClick={() => {
+                onSeek?.(timestamp)
+              }}
+            >
               {minutes}:{seconds.toString().padStart(2, '0')}
-            </span>
-            <p className="text-gray-900 leading-relaxed flex-1">
-              {sentence.trim()}{index < sentences.length - 1 ? '.' : ''}
+            </button>
+            <p className={`leading-relaxed flex-1 transition-all duration-300 ${
+              isCurrentSentence ? 'text-gray-900 font-medium' : 
+              isNearCurrentSentence ? 'text-gray-800' : 'text-gray-700'
+            }`}>
+              <span className={highlightingEnabled && isCurrentSentence ? 'text-highlighted-active' : ''}>
+                {sentence.trim()}{index < sentences.length - 1 ? '.' : ''}
+              </span>
             </p>
           </div>
         </div>

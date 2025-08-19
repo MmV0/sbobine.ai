@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AudioFile, Transcription, Summary, JobStatus, Elaboration, ConceptMap, Quiz, Folder } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -171,7 +171,7 @@ export function useMockData() {
     }
   }
 
-  const getTranscription = (audioFileId: string): Transcription | null => {
+  const getTranscription = useCallback((audioFileId: string): Transcription | null => {
     // Controlla prima nei dati reali salvati
     const realTranscriptions = JSON.parse(localStorage.getItem('sbobine_transcriptions') || '{}')
     if (realTranscriptions[audioFileId]) {
@@ -201,9 +201,9 @@ export function useMockData() {
     }
     
     return transcriptions[audioFileId as keyof typeof transcriptions] || null
-  }
+  }, [])
 
-  const getSummary = (transcriptionId: string): Summary | null => {
+  const getSummary = useCallback((transcriptionId: string): Summary | null => {
     // Controlla prima nei dati reali salvati
     const realSummaries = JSON.parse(localStorage.getItem('sbobine_summaries') || '{}')
     if (realSummaries[transcriptionId]) {
@@ -305,7 +305,7 @@ export function useMockData() {
     }
 
     return summaries[transcriptionId as keyof typeof summaries] || null
-  }
+  }, [])
 
   const saveTranscription = (audioFileId: string, transcription: Transcription) => {
     const existingTranscriptions = JSON.parse(localStorage.getItem('sbobine_transcriptions') || '{}')

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/providers/AuthProvider'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import DashboardLayout from '@/components/DashboardLayout'
 import { AudioFile } from '@/types'
@@ -14,7 +14,8 @@ import { useMockData } from '@/hooks/useMockData'
 export default function Dashboard() {
   const { user, loading } = useAuth()
   const router = useRouter()
-    const {
+  const searchParams = useSearchParams()
+  const {
     audioFiles,
     folders,
     refreshData,
@@ -24,13 +25,32 @@ export default function Dashboard() {
     deleteFolder,
     moveLessonToFolder
   } = useMockData()
-  const [selectedTab, setSelectedTab] = useState<'upload' | 'library'>('upload')
+
+  // Inizializza il tab in base ai search params o al numero di lezioni
+  const getInitialTab = (): 'upload' | 'library' => {
+    const tabParam = searchParams.get('tab') as 'upload' | 'library' | null
+    if (tabParam && (tabParam === 'upload' || tabParam === 'library')) {
+      return tabParam
+    }
+    // Se l'utente ha già delle lezioni, mostra la libreria per default
+    return audioFiles.length > 0 ? 'library' : 'upload'
+  }
+
+  const [selectedTab, setSelectedTab] = useState<'upload' | 'library'>(getInitialTab())
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/')
     }
   }, [user, loading, router])
+
+  // Aggiorna il tab quando cambiano i search params
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as 'upload' | 'library' | null
+    if (tabParam && (tabParam === 'upload' || tabParam === 'library')) {
+      setSelectedTab(tabParam)
+    }
+  }, [searchParams])
 
   // Refresh automatico dei dati ogni 5 secondi quando si è sulla tab "library" 
   useEffect(() => {
@@ -76,10 +96,6 @@ export default function Dashboard() {
   if (!user) {
     return null
   }
-
-  // Se l'utente ha già delle lezioni, mostra la libreria per default
-  const hasLessons = audioFiles.length > 0
-  const defaultTab = hasLessons ? 'library' : 'upload'
 
   return (
     <DashboardLayout>
